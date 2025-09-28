@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>astro</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --accent: #00c6ff;
+      --accent-glow: #0072ff;
+      --glow-shadow: 0 0 15px #00c6ff4d, 0 0 40px #00c6ff26;
+      --glow-shadow-hover: 0 0 25px #00c6ff80, 0 0 60px #00c6ff33;
+
+      /* Dark Theme */
+      --bg-dark: #0d1117;
+      --card-bg-dark: rgba(30, 41, 59, 0.5);
+      --card-border-dark: rgba(255, 255, 255, 0.1);
+      --text-dark: #e2e8f0;
+      --text-muted-dark: #94a3b8;
+
+      /* Light Theme */
+      --bg-light: #f1f5f9;
+      --card-bg-light: rgba(255, 255, 255, 0.6);
+      --card-border-light: rgba(0, 0, 0, 0.1);
+      --text-light: #0f172a;
+      --text-muted-light: #475569;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s ease, color 0.5s ease;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    body.light {
+      background: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    .container {
+      width: 95%;
+      max-width: 580px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      align-items: center;
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    /* Staggered Animations */
+    .animated {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* Header */
+    .header {
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--accent), var(--accent-glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation-delay: 0.2s;
+    }
+
+    /* Player */
+    .player-wrapper {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 1.25rem;
+      overflow: hidden;
+      border: 1px solid var(--accent);
+      box-shadow: var(--glow-shadow);
+      position: relative;
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+      animation-delay: 0.6s;
+    }
+    .player-wrapper:hover {
+        transform: scale(1.03);
+        box-shadow: var(--glow-shadow-hover);
+    }
+    #contentFrame {
+      width: 100%; height: 100%; border: none; display: none;
+    }
+    .loader {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .spinner {
+      border: 4px solid rgba(255,255,255,0.2); border-top-color: var(--accent);
+      border-radius: 50%; width: 45px; height: 45px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 100% {transform: rotate(360deg);} }
+
+    /* Action Cards */
+    .action-card {
+      width: 100%; border-radius: 1rem;
+      backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    body.dark .action-card { background: var(--card-bg-dark); border: 1px solid var(--card-border-dark); }
+    body.light .action-card { background: var(--card-bg-light); border: 1px solid var(--card-border-light); }
+    .action-card:hover { transform: translateY(-4px); }
+    
+    .share-card { animation-delay: 0.4s; }
+    .telegram-card { animation-delay: 0.8s; }
+
+    .action-card button, .action-card a {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.75rem; color: inherit; font-size: 1rem; font-weight: 600;
+      background: none; border: none; width: 100%; padding: 1rem;
+      cursor: pointer; text-decoration: none; position: relative; z-index: 1;
+    }
+    .action-card i { transition: transform 0.3s ease; }
+    .action-card:hover i { transform: scale(1.1) rotate(-5deg); }
+
+    /* Shiny hover effect */
+    .action-card::before {
+      content: ''; position: absolute; top: 0; left: -100%;
+      width: 75%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    .action-card:hover::before { left: 125%; }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed; top: 1.25rem; right: 1.25rem; z-index: 100;
+      background: var(--card-bg-dark); border: 1px solid var(--card-border-dark);
+      color: var(--text-dark); width: 45px; height: 45px;
+      border-radius: 50%; cursor: pointer; display: grid; place-items: center;
+      transition: all 0.3s ease; backdrop-filter: blur(10px);
+    }
+    .theme-toggle:hover { transform: translateY(-2px) scale(1.1); box-shadow: var(--glow-shadow); }
+    body.light .theme-toggle {
+      background: var(--card-bg-light); border: 1px solid var(--card-border-light);
+      color: var(--text-light);
+    }
+    .theme-toggle .fa-sun { display: none; }
+    body.light .theme-toggle .fa-sun { display: block; }
+    body.light .theme-toggle .fa-moon { display: none; }
+
+    /* Telegram Popup */
+    .popup-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0s 0.4s;
+    }
+    .popup-overlay.show { opacity: 1; visibility: visible; transition-delay: 0s; }
+    .popup-card {
+      width: 90%; max-width: 380px; text-align: center;
+      border-radius: 1.5rem; padding: 2rem;
+      transform: scale(0.9) translateY(20px); opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.4s ease;
+    }
+    .popup-overlay.show .popup-card { transform: scale(1) translateY(0); opacity: 1; }
+    .popup-icon { font-size: 3.5rem; color: var(--accent); margin-bottom: 1rem; }
+    .popup-card h3 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+    body.dark .popup-card p { color: var(--text-muted-dark); }
+    body.light .popup-card p { color: var(--text-muted-light); }
+    .popup-buttons { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+    .popup-btn {
+      padding: 0.9rem; border-radius: 0.75rem; font-weight: 600;
+      border: none; text-decoration: none; display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .popup-btn:hover { transform: translateY(-2px); }
+    .popup-join-btn {
+      background: linear-gradient(90deg, var(--accent), var(--accent-glow));
+      color: white; box-shadow: 0 4px 15px -5px var(--accent);
+    }
+    .popup-join-btn:hover { box-shadow: 0 6px 20px -5px var(--accent); }
+    .popup-close-btn { color: inherit; }
+    body.dark .popup-close-btn { background: rgba(255,255,255,0.1); }
+    body.light .popup-close-btn { background: rgba(0,0,0,0.08); }
+
+    /* Custom Toast Notification */
+    .toast {
+      position: fixed; bottom: -100px; left: 50%;
+      transform: translateX(-50%);
+      background: #22c55e; color: white;
+      padding: 1rem 1.5rem; border-radius: 0.75rem;
+      box-shadow: 0 5px 20px -5px #22c55e80;
+      font-weight: 600; z-index: 2000;
+      transition: bottom 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+    .toast.show { bottom: 2rem; }
+  </style>
+</head>
+<body class="dark">
+
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+    <i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i>
+  </button>
+  
+  <div class="container">
+    <div class="header animated">🔥 Live Stream 🔥</div>
+
+    <div class="action-card share-card animated">
+      <button onclick="sharePage()">
+        <i class="fa-solid fa-share-nodes"></i><span>Share Stream</span>
+      </button>
+    </div>
+
+    <div class="player-wrapper animated">
+      <div class="loader" id="loader"><div class="spinner"></div></div>
+      <iframe id="contentFrame"
+        sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+        allow="encrypted-media; fullscreen"
+        src="https://cricketstan.github.io/Channel-11"
+        onload="hideLoader()">
+      </iframe>
+    </div>
+
+    <div class="action-card telegram-card animated">
+      <a href="https://t.me/+0Mb-BJB9T3gwM2M1" target="_blank">
+        <i class="fa-brands fa-telegram"></i><span>Join Telegram Channel</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="popup-overlay" id="telegram-popup">
+    <div class="popup-card action-card">
+      <div class="popup-icon"><i class="fa-brands fa-telegram"></i></div>
+      <h3>Never Miss a Match!</h3>
+      <p>Join our Telegram for live updates, stream links, and more.</p>
+      <div class="popup-buttons">
+        <a href="https://t.me/+0Mb-BJB9T3gwM2M1" target="_blank" class="popup-btn popup-join-btn" onclick="dismissPopup()">
+          <i class="fa-solid fa-rocket"></i> Join Now
+        </a>
+        <button class="popup-btn popup-close-btn" onclick="dismissPopup()">Maybe Later</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Link Copied!</div>
+
+  <script>
+    // Theme Toggle
+    const body = document.body;
+    function toggleTheme() {
+      body.classList.toggle('light');
+    }
+
+    // Loader
+    function hideLoader() {
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('contentFrame').style.display = 'block';
+    }
+
+    // Custom Share & Toast Notification
+    function showToast() {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 2500);
+    }
+
+    function sharePage() {
+      if (navigator.share) {
+        navigator.share({
+          title: document.title,
+          text: 'Watch the live stream!',
+          url: window.location.href
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(window.location.href).then(showToast)
+        .catch(err => console.error('Failed to copy: ', err));
+      }
+    }
+
+    // Telegram Popup Logic
+    const popup = document.getElementById('telegram-popup');
+    const POPUP_DISMISSED_KEY = 'telegramPopupDismissed';
+
+    function showPopup() {
+      // Don't show if already dismissed in this session
+      if (sessionStorage.getItem(POPUP_DISMISSED_KEY)) return;
+      popup.classList.add('show');
+    }
+
+    function dismissPopup() {
+      popup.classList.remove('show');
+      sessionStorage.setItem(POPUP_DISMISSED_KEY, 'true');
+    }
+
+    // Show popup after a delay
+    setTimeout(showPopup, 5000); // 5 seconds
+  </script>
+</body>
+</html>
